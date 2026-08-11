@@ -1,0 +1,744 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Master Admin Control Center - WS Chat</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+    <style>
+        :root {
+            --bg-dark: #0a0a16;
+            --panel-bg: rgba(18, 18, 35, 0.8);
+            --panel-border: rgba(255, 255, 255, 0.12);
+            --accent: #ec4899;
+            --accent-cyan: #06b6d4;
+            --accent-purple: #8b5cf6;
+            --text-main: #f8fafc;
+            --text-secondary: #94a3b8;
+            --danger: #ef4444;
+            --success: #10b981;
+            --warning: #f59e0b;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; }
+
+        body {
+            background: radial-gradient(circle at top left, #1e0b36 0%, #0a0a16 50%, #030712 100%);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* HEADER */
+        header {
+            background: rgba(10, 10, 22, 0.85);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--panel-border);
+            padding: 16px 32px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .brand-title {
+            font-size: 20px;
+            font-weight: 800;
+            background: linear-gradient(135deg, #ec4899, #8b5cf6, #06b6d4);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .btn-nav {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid var(--panel-border);
+            color: #fff;
+            padding: 8px 16px;
+            border-radius: 12px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s;
+        }
+        .btn-nav:hover { background: rgba(255, 255, 255, 0.15); border-color: var(--accent); }
+
+        /* CONTAINER & LAYOUT */
+        .admin-container {
+            max-width: 1300px;
+            width: 94%;
+            margin: 30px auto;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        /* STATS GRID */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+        }
+
+        .stat-card {
+            background: var(--panel-bg);
+            backdrop-filter: blur(15px);
+            border: 1px solid var(--panel-border);
+            border-radius: 20px;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.4);
+        }
+
+        .stat-icon {
+            width: 52px;
+            height: 52px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+        }
+
+        .stat-val { font-size: 24px; font-weight: 800; color: #fff; }
+        .stat-label { font-size: 12px; color: var(--text-secondary); font-weight: 600; margin-top: 2px; }
+
+        /* TAB NAVIGATION */
+        .tab-bar {
+            display: flex;
+            gap: 10px;
+            background: rgba(0,0,0,0.4);
+            padding: 6px;
+            border-radius: 18px;
+            border: 1px solid var(--panel-border);
+            overflow-x: auto;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 12px 18px;
+            border-radius: 14px;
+            border: none;
+            background: transparent;
+            color: var(--text-secondary);
+            font-weight: 700;
+            font-size: 13px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            white-space: nowrap;
+            transition: all 0.2s;
+        }
+        .tab-btn.active {
+            background: linear-gradient(135deg, var(--accent), var(--accent-purple));
+            color: #fff;
+            box-shadow: 0 8px 20px rgba(236,72,153,0.4);
+        }
+
+        /* DATA TABLES & PANELS */
+        .panel-box {
+            background: var(--panel-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--panel-border);
+            border-radius: 24px;
+            padding: 24px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+        }
+
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .panel-title { font-size: 18px; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 8px; }
+
+        .search-input {
+            background: rgba(0,0,0,0.4);
+            border: 1px solid var(--panel-border);
+            color: #fff;
+            padding: 10px 16px;
+            border-radius: 12px;
+            font-size: 13px;
+            outline: none;
+            width: 250px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 13px;
+        }
+
+        th {
+            background: rgba(255,255,255,0.05);
+            padding: 14px 16px;
+            color: var(--text-secondary);
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-bottom: 1px solid var(--panel-border);
+        }
+
+        td {
+            padding: 14px 16px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            vertical-align: middle;
+        }
+
+        tr:hover td { background: rgba(255,255,255,0.02); }
+
+        .user-cell { display: flex; align-items: center; gap: 10px; font-weight: 700; }
+        .user-avatar { width: 36px; height: 36px; border-radius: 50%; object-fit: cover; border: 2px solid var(--accent); }
+
+        .badge-status {
+            padding: 4px 10px;
+            border-radius: 10px;
+            font-size: 11px;
+            font-weight: 700;
+            display: inline-block;
+        }
+        .badge-online { background: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3); }
+        .badge-frozen { background: rgba(239, 68, 68, 0.15); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3); }
+        .badge-admin { background: rgba(139, 92, 246, 0.15); color: #a855f7; border: 1px solid rgba(139, 92, 246, 0.3); }
+
+        .btn-act {
+            padding: 6px 12px;
+            border-radius: 10px;
+            font-size: 12px;
+            font-weight: 700;
+            border: none;
+            cursor: pointer;
+            transition: transform 0.15s;
+            margin-right: 4px;
+        }
+        .btn-act:hover { transform: scale(1.05); }
+
+        .btn-freeze { background: rgba(245, 158, 11, 0.2); color: #f59e0b; border: 1px solid #f59e0b; }
+        .btn-unfreeze { background: rgba(16, 185, 129, 0.2); color: #10b981; border: 1px solid #10b981; }
+        .btn-delete { background: rgba(239, 68, 68, 0.2); color: #ef4444; border: 1px solid #ef4444; }
+        .btn-role { background: rgba(139, 92, 246, 0.2); color: #a855f7; border: 1px solid #a855f7; }
+
+        /* REELS GRID */
+        .reels-admin-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 16px;
+        }
+
+        .reel-admin-card {
+            background: rgba(0,0,0,0.4);
+            border: 1px solid var(--panel-border);
+            border-radius: 18px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .reel-admin-card video {
+            width: 100%;
+            height: 240px;
+            object-fit: cover;
+        }
+
+        .reel-admin-info {
+            padding: 12px;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="brand-title">
+            <i class="fa-solid fa-shield-halved" style="color: #ec4899;"></i> WS CHAT MASTER ADMIN
+        </div>
+        <div class="header-actions">
+            <span style="font-size: 13px; font-weight: 700; color: rgba(255,255,255,0.8);">👑 @{{ username }}</span>
+            <button onclick="copySecretAdminLink()" class="btn-nav" style="background: rgba(236,72,153,0.2); border: 1px solid #ec4899; color: #ec4899;"><i class="fa-solid fa-link"></i> Copy Secret Link</button>
+            <a href="/" class="btn-nav"><i class="fa-solid fa-house"></i> Open WS Chat</a>
+            <a href="/logout" class="btn-nav" style="color: var(--danger);"><i class="fa-solid fa-right-from-bracket"></i> Logout</a>
+        </div>
+    </header>
+
+    <div class="admin-container">
+        
+        <!-- STATS OVERVIEW CARDS -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon" style="background: rgba(236, 72, 153, 0.15); color: #ec4899;"><i class="fa-solid fa-users"></i></div>
+                <div>
+                    <div id="stat-total-users" class="stat-val">{{ total_users if total_users is defined else 0 }}</div>
+                    <div class="stat-label">Total Users</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon" style="background: rgba(16, 185, 129, 0.15); color: #10b981;"><i class="fa-solid fa-signal"></i></div>
+                <div>
+                    <div id="stat-online-users" class="stat-val">1</div>
+                    <div class="stat-label">Online Users</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon" style="background: rgba(245, 158, 11, 0.15); color: #f59e0b;"><i class="fa-solid fa-snowflake"></i></div>
+                <div>
+                    <div id="stat-frozen-users" class="stat-val">{{ frozen_users if frozen_users is defined else 0 }}</div>
+                    <div class="stat-label">Frozen Accounts</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon" style="background: rgba(6, 182, 212, 0.15); color: #06b6d4;"><i class="fa-solid fa-clapperboard"></i></div>
+                <div>
+                    <div id="stat-total-reels" class="stat-val">{{ total_reels if total_reels is defined else 0 }}</div>
+                    <div class="stat-label">Total Reels</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon" style="background: rgba(139, 92, 246, 0.15); color: #8b5cf6;"><i class="fa-solid fa-comments"></i></div>
+                <div>
+                    <div id="stat-total-msgs" class="stat-val">{{ total_messages if total_messages is defined else 0 }}</div>
+                    <div class="stat-label">Messages Exchanged</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB NAVIGATION -->
+        <div class="tab-bar">
+            <button onclick="switchTab('users', this)" class="tab-btn active"><i class="fa-solid fa-user-shield"></i> User Control Studio</button>
+            <button onclick="switchTab('reels', this)" class="tab-btn"><i class="fa-solid fa-film"></i> Reels Moderation</button>
+            <button onclick="switchTab('messages', this)" class="tab-btn"><i class="fa-solid fa-comments"></i> Chat Moderation</button>
+            <button onclick="switchTab('reports', this)" class="tab-btn" style="color: #f59e0b;"><i class="fa-solid fa-triangle-exclamation"></i> Reports & Incidents (<span id="reports-tab-badge">{{ reports|length if reports else 0 }}</span>)</button>
+            <button onclick="switchTab('broadcast', this)" class="tab-btn"><i class="fa-solid fa-bullhorn"></i> Global Broadcast</button>
+        </div>
+
+        <!-- TAB 1: USERS CONTROL -->
+        <div id="tab-content-users" class="panel-box">
+            <div class="panel-header">
+                <div class="panel-title"><i class="fa-solid fa-users-gear" style="color: #ec4899;"></i> User Accounts & God-Mode Permissions</div>
+                <input type="text" id="user-search-input" onkeyup="filterUsersTable()" placeholder="Search user by handle..." class="search-input">
+            </div>
+
+            <div style="overflow-x: auto;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>User Handle</th>
+                            <th>Status & Role</th>
+                            <th>Streak</th>
+                            <th>Bio</th>
+                            <th>Master Admin God-Mode Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="admin-users-tbody">
+                        {% if users %}
+                            {% for u in users %}
+                                <tr>
+                                    <td>
+                                        <div class="user-cell">
+                                            <img src="{{ u.avatar }}" class="user-avatar">
+                                            <div>
+                                                <div>@{{ u.username }}</div>
+                                                <div style="font-size:11px; color:var(--text-secondary); font-weight:500;">ID: #{{ u.id }}</div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        {% if u.is_frozen %}<span class="badge-status badge-frozen">❄️ Frozen</span>{% else %}<span class="badge-status badge-online">🟢 Active</span>{% endif %}
+                                        {% if u.is_admin %}<span class="badge-status badge-admin">👑 Master Admin</span>{% endif %}
+                                    </td>
+                                    <td><span style="color:#f59e0b; font-weight:700;">🔥 {{ u.win_streak }} Streak</span></td>
+                                    <td style="color:rgba(255,255,255,0.8); max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ u.bio or 'Available' }}</td>
+                                    <td>
+                                        <button onclick="adminEditUser('{{ u.username }}', '{{ u.bio }}', {{ u.win_streak }})" class="btn-act btn-unfreeze">✏️ Edit Details</button>
+                                        <button onclick="toggleUserFreeze('{{ u.username }}')" class="btn-act {% if u.is_frozen %}btn-unfreeze{% else %}btn-freeze{% endif %}">{% if u.is_frozen %}⚡ Unfreeze{% else %}❄️ Freeze{% endif %}</button>
+                                        <button onclick="toggleUserRole('{{ u.username }}')" class="btn-act btn-role">{% if u.is_admin %}🛡️ Demote{% else %}👑 Make Admin{% endif %}</button>
+                                        <button onclick="deleteUserAccount('{{ u.username }}')" class="btn-act btn-delete">🗑️ Delete</button>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- TAB 2: REELS MODERATION -->
+        <div id="tab-content-reels" class="panel-box" style="display: none;">
+            <div class="panel-header">
+                <div class="panel-title"><i class="fa-solid fa-clapperboard" style="color: #06b6d4;"></i> Reels Content Moderation</div>
+            </div>
+            <div id="admin-reels-grid" class="reels-admin-grid">
+                {% if reels %}
+                    {% for r in reels %}
+                        <div class="reel-admin-card">
+                            <video src="{{ r.video_url }}" controls playsinline></video>
+                            <div class="reel-admin-info">
+                                <div style="font-weight:700; color:#fff; font-size:13px;">@{{ r.username }}</div>
+                                <div style="font-size:12px; color:rgba(255,255,255,0.8); margin:4px 0;">{{ r.caption or 'No caption' }}</div>
+                                <div style="font-size:11px; color:var(--text-secondary); margin-bottom:8px;">👁️ {{ r.views }} | ❤️ {{ r.likes }}</div>
+                                <button onclick="adminDeleteReel({{ r.id }})" class="btn-act btn-delete" style="width:100%;">🗑️ Moderate Reel</button>
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- TAB 3: CHAT MESSAGES MODERATION -->
+        <div id="tab-content-messages" class="panel-box" style="display: none;">
+            <div class="panel-header">
+                <div class="panel-title"><i class="fa-solid fa-comments" style="color: #38bdf8;"></i> Chat Messages Moderation</div>
+                <button onclick="socket.emit('admin_get_recent_messages', { admin_user: myName })" class="btn-act btn-unfreeze"><i class="fa-solid fa-rotate-right"></i> Refresh</button>
+            </div>
+            <div style="overflow-x: auto;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Msg ID</th>
+                            <th>Sender</th>
+                            <th>Recipient</th>
+                            <th>Message Content</th>
+                            <th>Timestamp</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="admin-messages-tbody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- TAB 3: REPORTS LOG -->
+        <div id="tab-content-reports" class="panel-box" style="display: none;">
+            <div class="panel-header">
+                <div class="panel-title"><i class="fa-solid fa-flag" style="color: #f59e0b;"></i> User Incident Reports (<span id="reports-header-count">{{ reports|length if reports else 0 }}</span>)</div>
+            </div>
+            <div style="overflow-x: auto;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Report ID</th>
+                            <th>Reporter</th>
+                            <th>Target Type</th>
+                            <th>Target Info</th>
+                            <th>Reason</th>
+                            <th>Status</th>
+                            <th>Action & Moderation</th>
+                        </tr>
+                    </thead>
+                    <tbody id="admin-reports-tbody">
+                        {% if reports %}
+                            {% for rep in reports %}
+                                <tr>
+                                    <td>#{{ rep.id }}</td>
+                                    <td><b>@{{ rep.reporter }}</b></td>
+                                    <td><span class="badge-status badge-admin">{{ rep.target_type }}</span></td>
+                                    <td><b>{{ rep.target_id }}</b></td>
+                                    <td style="color:#f59e0b; font-weight:600;">{{ rep.reason }}</td>
+                                    <td><span class="badge-status {% if rep.status == 'resolved' %}badge-online{% else %}badge-frozen{% endif %}">{{ rep.status }}</span></td>
+                                    <td>
+                                        <div style="display: flex; gap: 4px; flex-wrap: wrap;">
+                                            <button onclick="adminSendWarningNotice('{{ rep.target_id }}', '{{ rep.reason }}', '{{ rep.target_type }}')" class="btn-act btn-freeze" style="background: rgba(239, 68, 68, 0.2); border: 1px solid #ef4444; color: #ef4444;" title="Send Report-Dependent Warning Notice to Reported User">📩 Send Notice</button>
+                                            {% if 'User' in rep.target_type %}
+                                                <button onclick="toggleUserFreeze('{{ rep.target_id }}')" class="btn-act btn-freeze" title="Freeze Target User Account">❄️ Freeze User</button>
+                                            {% elif 'Reel' in rep.target_type %}
+                                                <button onclick="adminDeleteReel({{ rep.target_id }})" class="btn-act btn-delete" title="Delete Reported Reel Video">🗑️ Delete Reel</button>
+                                            {% endif %}
+                                            {% if rep.status != 'resolved' %}
+                                                <button onclick="resolveReport({{ rep.id }})" class="btn-act btn-unfreeze">✅ Mark Resolved</button>
+                                            {% else %}
+                                                <span style="color:#10b981; font-size:12px; font-weight:700;">✅ Resolved</span>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        {% else %}
+                            <tr><td colspan="7" style="text-align:center; color:var(--text-secondary);">No pending incident reports.</td></tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- TAB 4: BROADCAST -->
+        <div id="tab-content-broadcast" class="panel-box" style="display: none;">
+            <div class="panel-header">
+                <div class="panel-title"><i class="fa-solid fa-bullhorn" style="color: #a855f7;"></i> Send Global System Broadcast</div>
+            </div>
+            <div style="max-width: 600px;">
+                <label style="font-size: 12px; font-weight: 700; color: var(--text-secondary); display: block; margin-bottom: 8px;">ANNOUNCEMENT MESSAGE</label>
+                <textarea id="broadcast-msg-input" placeholder="Type announcement to send to all online users..." rows="4" style="width: 100%; background: rgba(0,0,0,0.4); border: 1px solid var(--panel-border); color: #fff; border-radius: 14px; padding: 14px; font-size: 13px; outline: none; margin-bottom: 16px;"></textarea>
+                <button onclick="sendGlobalBroadcast()" class="btn-nav" style="background: linear-gradient(135deg, #ec4899, #8b5cf6); border: none; padding: 12px 24px; font-size: 14px; width: 100%; justify-content: center;"><i class="fa-solid fa-paper-plane"></i> Send Broadcast Announcement</button>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        const myName = "{{ username }}";
+        const socket = io();
+
+        socket.on('connect', () => {
+            socket.emit('request_admin_stats', { admin_user: myName });
+            socket.emit('admin_get_users', { admin_user: myName });
+            socket.emit('admin_get_reels', { admin_user: myName });
+            socket.emit('admin_get_reports', { admin_user: myName });
+            socket.emit('admin_get_recent_messages', { admin_user: myName });
+        });
+
+        socket.on('load_admin_stats', stats => {
+            document.getElementById('stat-total-users').innerText = stats.total_users;
+            document.getElementById('stat-online-users').innerText = stats.online_users;
+            document.getElementById('stat-frozen-users').innerText = stats.frozen_users;
+            document.getElementById('stat-total-reels').innerText = stats.total_reels;
+            document.getElementById('stat-total-msgs').innerText = stats.total_messages;
+        });
+
+        socket.on('load_admin_users', users => {
+            const tbody = document.getElementById('admin-users-tbody');
+            tbody.innerHTML = users.map(u => `
+                <tr>
+                    <td>
+                        <div class="user-cell">
+                            <img src="${u.avatar}" class="user-avatar">
+                            <div>
+                                <div>@${u.username}</div>
+                                <div style="font-size:11px; color:var(--text-secondary); font-weight:500;">ID: #${u.id}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        ${u.is_online ? `<span class="badge-status badge-online">🟢 Online</span>` : `<span class="badge-status" style="background:rgba(255,255,255,0.05); color:#94a3b8;">🔴 Offline</span>`}
+                        ${u.is_frozen ? `<span class="badge-status badge-frozen">❄️ Frozen</span>` : ''}
+                        ${u.is_admin ? `<span class="badge-status badge-admin">👑 Master Admin</span>` : ''}
+                    </td>
+                    <td><span style="color:#f59e0b; font-weight:700;">🔥 ${u.win_streak} Streak</span></td>
+                    <td style="color:rgba(255,255,255,0.8); max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${u.bio || 'Available'}</td>
+                    <td>
+                        <button onclick="adminEditUser('${u.username}', '${u.bio.replace(/'/g, "\\'")}', ${u.win_streak})" class="btn-act btn-unfreeze">✏️ Edit Details</button>
+                        <button onclick="toggleUserFreeze('${u.username}')" class="btn-act ${u.is_frozen ? 'btn-unfreeze' : 'btn-freeze'}">${u.is_frozen ? '⚡ Unfreeze' : '❄️ Freeze'}</button>
+                        <button onclick="toggleUserRole('${u.username}')" class="btn-act btn-role">${u.is_admin ? '🛡️ Demote' : '👑 Make Admin'}</button>
+                        <button onclick="deleteUserAccount('${u.username}')" class="btn-act btn-delete">🗑️ Delete</button>
+                    </td>
+                </tr>
+            `).join('');
+        });
+
+        socket.on('load_admin_messages', msgs => {
+            const tbody = document.getElementById('admin-messages-tbody');
+            if (msgs.length === 0) { tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:var(--text-secondary);">No messages found.</td></tr>`; return; }
+            tbody.innerHTML = msgs.map(m => `
+                <tr>
+                    <td>#${m.id}</td>
+                    <td><b>@${m.sender}</b></td>
+                    <td><b>${m.recipient}</b></td>
+                    <td style="max-width:300px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:rgba(255,255,255,0.9);">${m.message}</td>
+                    <td style="font-size:11px; color:var(--text-secondary);">${m.timestamp}</td>
+                    <td>
+                        <button onclick="adminDeleteMessage(${m.id})" class="btn-act btn-delete">🗑️ Purge Msg</button>
+                    </td>
+                </tr>
+            `).join('');
+        });
+
+        function adminEditUser(username, currentBio, currentStreak) {
+            const newBio = prompt(`[Master Admin] Edit Bio for @${username}:`, currentBio);
+            if (newBio === null) return;
+            const newStreak = prompt(`[Master Admin] Set Win Streak for @${username}:`, currentStreak);
+            if (newStreak === null) return;
+            const resetPw = confirm(`[Master Admin] Set new password for @${username}?`);
+            let newPw = '';
+            if (resetPw) {
+                newPw = prompt(`Enter NEW password for @${username}:`);
+            }
+
+            socket.emit('admin_edit_user_details', {
+                admin_user: myName,
+                target_user: username,
+                bio: newBio,
+                win_streak: parseInt(newStreak) || 0,
+                password: newPw
+            });
+            alert(`User @${username} updated by Master Admin!`);
+            setTimeout(() => socket.emit('admin_get_users', { admin_user: myName }), 300);
+        }
+
+        function adminDeleteMessage(msgId) {
+            if (confirm(`Purge Chat Message #${msgId}?`)) {
+                socket.emit('admin_delete_any_message', { admin_user: myName, msg_id: msgId });
+                setTimeout(() => socket.emit('admin_get_recent_messages', { admin_user: myName }), 300);
+            }
+        }
+
+        socket.on('load_admin_reels', reels => {
+            const grid = document.getElementById('admin-reels-grid');
+            if (reels.length === 0) { grid.innerHTML = `<div style="color:var(--text-secondary); padding:20px;">No reels found.</div>`; return; }
+            grid.innerHTML = reels.map(r => `
+                <div class="reel-admin-card">
+                    <video src="${r.video_url}" controls playsinline></video>
+                    <div class="reel-admin-info">
+                        <div style="font-weight:700; color:#fff; font-size:13px;">@${r.username}</div>
+                        <div style="font-size:12px; color:rgba(255,255,255,0.8); margin:4px 0;">${r.caption || 'No caption'}</div>
+                        <div style="font-size:11px; color:var(--text-secondary); margin-bottom:8px;">👁️ ${r.views} | ❤️ ${r.likes}</div>
+                        <button onclick="adminDeleteReel(${r.id})" class="btn-act btn-delete" style="width:100%;">🗑️ Moderate Reel</button>
+                    </div>
+                </div>
+            `).join('');
+        });
+
+        socket.on('load_admin_reports', reports => {
+            const tbody = document.getElementById('admin-reports-tbody');
+            const countLabel = document.getElementById('reports-header-count');
+            const badgeLabel = document.getElementById('reports-tab-badge');
+            
+            if (countLabel) countLabel.innerText = reports ? reports.length : 0;
+            if (badgeLabel) badgeLabel.innerText = reports ? reports.length : 0;
+
+            if (!reports || reports.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:var(--text-secondary);">No pending incident reports.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = reports.map(rep => {
+                const isUser = rep.target_type && rep.target_type.includes('User');
+                const isReel = rep.target_type && rep.target_type.includes('Reel');
+                return `
+                    <tr>
+                        <td>#${rep.id}</td>
+                        <td><b>@${rep.reporter}</b></td>
+                        <td><span class="badge-status badge-admin">${rep.target_type}</span></td>
+                        <td><b>${rep.target_id}</b></td>
+                        <td style="color:#f59e0b; font-weight:600;">${rep.reason}</td>
+                        <td><span class="badge-status ${rep.status==='resolved'?'badge-online':'badge-frozen'}">${rep.status}</span></td>
+                        <td>
+                            <div style="display: flex; gap: 4px; flex-wrap: wrap;">
+                                <button onclick="adminSendWarningNotice('${rep.target_id}', '${(rep.reason || '').replace(/'/g, "\\'")}', '${rep.target_type}')" class="btn-act btn-freeze" style="background: rgba(239, 68, 68, 0.2); border: 1px solid #ef4444; color: #ef4444;" title="Send Report-Dependent Warning Notice">📩 Send Notice</button>
+                                ${isUser ? `<button onclick="toggleUserFreeze('${rep.target_id}')" class="btn-act btn-freeze" title="Freeze User">❄️ Freeze User</button>` : ''}
+                                ${isReel ? `<button onclick="adminDeleteReel(${rep.target_id})" class="btn-act btn-delete" title="Delete Reel">🗑️ Delete Reel</button>` : ''}
+                                ${rep.status !== 'resolved' ? `<button onclick="resolveReport(${rep.id})" class="btn-act btn-unfreeze">✅ Mark Resolved</button>` : '<span style="color:#10b981; font-size:12px; font-weight:700;">✅ Resolved</span>'}
+                                <button onclick="deleteReportTicket(${rep.id})" class="btn-act btn-delete" title="Delete Report Ticket">🗑️ Delete Ticket</button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        });
+
+        function adminSendWarningNotice(targetUser, reportReason, targetType) {
+            let customNotice = "";
+            const cleanReason = (reportReason || "").toLowerCase();
+
+            if (cleanReason.includes("spam") || cleanReason.includes("fake")) {
+                customNotice = `⚠️ OFFICIAL SPAM WARNING: Your content/account was reported for spamming (${reportReason || 'Spam'}). Cease posting unauthorized spam or promotional links immediately.`;
+            } else if (cleanReason.includes("harassment") || cleanReason.includes("abuse")) {
+                customNotice = `⚠️ OFFICIAL HARASSMENT WARNING: Your account was reported for abusive behavior (${reportReason || 'Abuse'}). Stop all hostile interactions immediately or face an account freeze.`;
+            } else if (cleanReason.includes("media") || cleanReason.includes("inappropriate")) {
+                customNotice = `⚠️ OFFICIAL CONTENT WARNING: Your ${targetType || 'media'} was reported for inappropriate content (${reportReason || 'Inappropriate Media'}). Repeated violations will trigger an immediate permanent account ban.`;
+            } else if (cleanReason.includes("impersonation")) {
+                customNotice = `⚠️ OFFICIAL IMPERSONATION WARNING: Your profile was reported for impersonating another person (${reportReason || 'Impersonation'}). Update your handle & profile details immediately.`;
+            } else {
+                customNotice = `⚠️ OFFICIAL ADMIN WARNING: Your account was reported for community terms violation (${reportReason || 'Terms Violation'}). Cease violations immediately to avoid an account ban.`;
+            }
+
+            const noticeText = prompt(`[Master Admin] Send Report-Dependent Warning Notice to @${targetUser} (Report: ${reportReason || 'General'}):`, customNotice);
+            if (!noticeText || !noticeText.trim()) return;
+
+            socket.emit('admin_send_notice', {
+                admin_user: myName,
+                target_user: targetUser,
+                notice_text: noticeText.trim()
+            });
+            alert(`📩 Report-Dependent Warning Notice sent to @${targetUser}!`);
+        }
+
+        function switchTab(tabName, btn) {
+            document.querySelectorAll('.panel-box').forEach(p => p.style.display = 'none');
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            document.getElementById(`tab-content-${tabName}`).style.display = 'block';
+        }
+
+        function filterUsersTable() {
+            const term = document.getElementById('user-search-input').value.toLowerCase();
+            document.querySelectorAll('#admin-users-tbody tr').forEach(tr => {
+                tr.style.display = tr.innerText.toLowerCase().includes(term) ? '' : 'none';
+            });
+        }
+
+        function toggleUserFreeze(target) {
+            if (confirm(`Toggle Account Freeze for @${target}?`)) {
+                socket.emit('admin_toggle_freeze', { admin_user: myName, target_user: target });
+                setTimeout(() => socket.emit('admin_get_users', { admin_user: myName }), 300);
+            }
+        }
+
+        function toggleUserRole(target) {
+            if (confirm(`Toggle Master Admin status for @${target}?`)) {
+                socket.emit('admin_toggle_role', { admin_user: myName, target_user: target });
+                setTimeout(() => socket.emit('admin_get_users', { admin_user: myName }), 300);
+            }
+        }
+
+        function deleteUserAccount(target) {
+            if (confirm(`DANGER: Permanently delete account and all content for @${target}?`)) {
+                socket.emit('admin_delete_user', { admin_user: myName, target_user: target });
+                setTimeout(() => socket.emit('admin_get_users', { admin_user: myName }), 300);
+            }
+        }
+
+        function adminDeleteReel(reelId) {
+            if (confirm(`Delete Reel #${reelId}?`)) {
+                socket.emit('delete_reel', { id: reelId, username: myName });
+                setTimeout(() => socket.emit('admin_get_reels', { admin_user: myName }), 300);
+            }
+        }
+
+        function resolveReport(reportId) {
+            socket.emit('admin_resolve_report', { admin_user: myName, report_id: reportId });
+        }
+
+        function deleteReportTicket(reportId) {
+            if (confirm(`Delete Report Ticket #${reportId}?`)) {
+                socket.emit('admin_delete_report', { admin_user: myName, report_id: reportId });
+            }
+        }
+
+        function sendGlobalBroadcast() {
+            const msg = document.getElementById('broadcast-msg-input').value.trim();
+            if (!msg) return alert("Enter a message.");
+            socket.emit('admin_broadcast_msg', { admin_user: myName, message: msg });
+            alert("Broadcast Announcement sent to all users!");
+            document.getElementById('broadcast-msg-input').value = '';
+        }
+
+        function copySecretAdminLink() {
+            const secretUrl = `${window.location.origin}/secret-admin-portal-7796?token=WS_MASTER_KEY_7796`;
+            navigator.clipboard.writeText(secretUrl);
+            alert(`🔗 Secret Admin Direct Link copied to clipboard:\n${secretUrl}`);
+        }
+    </script>
+</body>
+</html>

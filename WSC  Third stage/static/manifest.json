@@ -1,0 +1,23 @@
+{
+  "name": "WS Premium Chat",
+  "short_name": "WS Chat",
+  "description": "Secure, real-time messaging application.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#03050a",
+  "theme_color": "#3b82f6",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/static/WS.jpg",
+      "sizes": "192x192",
+      "type": "image/jpeg",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/static/WS.jpg",
+      "sizes": "512x512",
+      "type": "image/jpeg"
+    }
+  ]
+}

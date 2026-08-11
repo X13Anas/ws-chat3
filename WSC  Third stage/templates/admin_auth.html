@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Secret Admin Verification - WS Chat</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; }
+        body {
+            background: radial-gradient(circle at center, #0f172a 0%, #030712 100%);
+            color: #fff;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .auth-card {
+            background: rgba(15, 15, 30, 0.95);
+            backdrop-filter: blur(30px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 28px;
+            padding: 36px 30px;
+            width: 100%;
+            max-width: 420px;
+            box-shadow: 0 30px 90px rgba(0, 0, 0, 0.9);
+            text-align: center;
+        }
+        .lock-icon {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            background: rgba(236, 72, 153, 0.15);
+            border: 2px solid #ec4899;
+            color: #ec4899;
+            font-size: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px auto;
+            box-shadow: 0 0 30px rgba(236, 72, 153, 0.4);
+        }
+        h2 { font-size: 22px; font-weight: 800; margin-bottom: 6px; }
+        p { font-size: 13px; color: #94a3b8; margin-bottom: 24px; }
+        .pin-input {
+            width: 100%;
+            background: rgba(0,0,0,0.5);
+            border: 2px solid rgba(255,255,255,0.15);
+            color: #fff;
+            padding: 14px;
+            border-radius: 16px;
+            font-size: 20px;
+            font-weight: 800;
+            letter-spacing: 8px;
+            text-align: center;
+            outline: none;
+            margin-bottom: 20px;
+            transition: border-color 0.2s;
+        }
+        .pin-input:focus { border-color: #ec4899; box-shadow: 0 0 20px rgba(236,72,153,0.3); }
+        .btn-unlock {
+            width: 100%;
+            background: linear-gradient(135deg, #ec4899, #8b5cf6);
+            color: #fff;
+            border: none;
+            padding: 14px;
+            border-radius: 16px;
+            font-size: 14px;
+            font-weight: 800;
+            cursor: pointer;
+            box-shadow: 0 10px 25px rgba(236,72,153,0.4);
+        }
+        .flash-msg {
+            background: rgba(239, 68, 68, 0.2);
+            border: 1px solid #ef4444;
+            color: #ef4444;
+            padding: 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 700;
+            margin-bottom: 16px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="auth-card">
+        <div class="lock-icon">
+            <i class="fa-solid fa-user-shield"></i>
+        </div>
+        <h2>Secret Admin Vault</h2>
+        <p>Enter Master Security Passcode to access System Controls</p>
+
+        {% with messages = get_flashed_messages() %}
+          {% if messages %}
+            {% for message in messages %}
+              <div class="flash-msg">{{ message }}</div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+
+        <form method="POST" action="/admin">
+            <input type="password" name="secret_passcode" maxlength="10" placeholder="••••" class="pin-input" autofocus required>
+            <button type="submit" class="btn-unlock"><i class="fa-solid fa-key" style="margin-right: 6px;"></i> Unlock Admin Panel</button>
+        </form>
+
+        <a href="/" style="display: inline-block; margin-top: 20px; font-size: 12px; color: #94a3b8; text-decoration: none;"><i class="fa-solid fa-arrow-left"></i> Return to Chat</a>
+    </div>
+
+</body>
+</html>

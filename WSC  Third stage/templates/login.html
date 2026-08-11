@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Login - WS Chat</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <link rel="manifest" href="/static/manifest.json">
+    <meta name="theme-color" content="#070a12">
+    <link rel="apple-touch-icon" href="/static/WS.jpg">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+        
+        :root {
+            --accent-gradient: linear-gradient(135deg, #6366f1 0%, #3b82f6 50%, #06b6d4 100%);
+            --accent-glow: rgba(99, 102, 241, 0.4);
+            --accent-hover: linear-gradient(135deg, #4f46e5 0%, #2563eb 50%, #0891b2 100%);
+            --danger: #ef4444;
+            --panel-bg: rgba(15, 23, 42, 0.65);
+            --panel-border: rgba(255, 255, 255, 0.12);
+            --inner-glow: inset 0 1px 1px rgba(255, 255, 255, 0.15);
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif; }
+
+        body { 
+            display: flex; justify-content: center; align-items: center; min-height: 100vh; min-height: 100dvh; 
+            background-color: #05070f;
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.25) 0px, transparent 50%),
+                radial-gradient(at 100% 0%, rgba(6, 182, 212, 0.2) 0px, transparent 50%),
+                radial-gradient(at 50% 100%, rgba(139, 92, 246, 0.2) 0px, transparent 50%),
+                url('/static/WS.jpg');
+            background-size: cover; background-position: center; background-attachment: fixed;
+            color: var(--text-primary); overflow: hidden; position: relative;
+        }
+
+        /* Ambient Glow Circles */
+        .ambient-orb {
+            position: absolute; border-radius: 50%; filter: blur(90px); opacity: 0.6; pointer-events: none; z-index: 0;
+            animation: orbFloat 14s infinite alternate ease-in-out;
+        }
+        .orb-1 { width: 350px; height: 350px; background: #4f46e5; top: -100px; left: -100px; }
+        .orb-2 { width: 300px; height: 300px; background: #06b6d4; bottom: -80px; right: -80px; animation-delay: -7s; }
+
+        @keyframes orbFloat {
+            0% { transform: translate(0, 0) scale(1); }
+            100% { transform: translate(40px, 30px) scale(1.1); }
+        }
+
+        .auth-box { 
+            position: relative; z-index: 1; background: var(--panel-bg); 
+            backdrop-filter: blur(35px) saturate(180%); -webkit-backdrop-filter: blur(35px) saturate(180%);
+            border: 1px solid var(--panel-border); border-radius: 28px; padding: 48px; width: 90%; max-width: 420px;
+            box-shadow: 0 30px 60px -15px rgba(0, 0, 0, 0.8), var(--inner-glow), 0 0 40px rgba(99, 102, 241, 0.15);
+            animation: authEntrance 0.8s var(--ease-out) forwards;
+        }
+
+        .brand-logo {
+            display: flex; justify-content: center; align-items: center; margin-bottom: 24px;
+        }
+        .brand-avatar {
+            width: 68px; height: 68px; border-radius: 20px; object-fit: cover;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5), 0 0 20px var(--accent-glow);
+            transition: transform 0.4s var(--ease-out);
+        }
+        .auth-box:hover .brand-avatar { transform: scale(1.06) rotate(2deg); }
+
+        .auth-box h2 { 
+            text-align: center; font-size: 28px; font-weight: 800; color: #fff; 
+            letter-spacing: -0.8px; margin-bottom: 8px;
+            background: linear-gradient(135deg, #ffffff 0%, #cbd5e1 100%);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        }
+        
+        .auth-subtitle {
+            text-align: center; font-size: 14px; color: var(--text-secondary); margin-bottom: 32px; font-weight: 400;
+        }
+
+        .flash-msg { 
+            background: rgba(239, 68, 68, 0.15); border-left: 4px solid var(--danger); 
+            color: #fca5a5; padding: 12px 16px; border-radius: 12px; font-size: 14px; 
+            margin-bottom: 24px; display: flex; align-items: center; gap: 10px; font-weight: 500;
+            backdrop-filter: blur(10px); box-shadow: 0 4px 12px rgba(239, 68, 68, 0.1);
+        }
+
+        .input-group { position: relative; margin-bottom: 20px; }
+        .input-icon {
+            position: absolute; left: 16px; top: 50%; transform: translateY(-50%);
+            color: var(--text-secondary); font-size: 16px; transition: color 0.3s ease;
+        }
+        .input-group input { 
+            width: 100%; padding: 16px 16px 16px 48px; font-size: 15px; color: #fff; 
+            background: rgba(0, 0, 0, 0.35); border: 1px solid var(--panel-border); 
+            border-radius: 16px; outline: none; transition: all 0.3s var(--ease-out); 
+        }
+        .input-group input:focus { 
+            border-color: #6366f1; background: rgba(0, 0, 0, 0.55); 
+            box-shadow: 0 0 20px rgba(99, 102, 241, 0.3), inset 0 1px 1px rgba(255, 255, 255, 0.1); 
+        }
+        .input-group input:focus + .input-icon { color: #6366f1; }
+        .input-group input::placeholder { color: var(--text-secondary); }
+
+        .btn-primary { 
+            width: 100%; padding: 16px; border-radius: 16px; border: none; 
+            background: var(--accent-gradient); color: white; font-weight: 700; font-size: 16px; 
+            cursor: pointer; transition: all 0.3s var(--ease-out); 
+            box-shadow: 0 8px 25px var(--accent-glow); margin-top: 10px;
+            display: flex; justify-content: center; align-items: center; gap: 8px;
+            letter-spacing: 0.2px;
+        }
+        .btn-primary:hover { 
+            background: var(--accent-hover); transform: translateY(-2px); 
+            box-shadow: 0 12px 30px rgba(99, 102, 241, 0.5); 
+        }
+        .btn-primary:active { transform: translateY(0); }
+
+        .link-container { text-align: center; margin-top: 28px; }
+        .link { color: var(--text-secondary); text-decoration: none; font-size: 14px; transition: 0.2s; font-weight: 500;}
+        .link span { 
+            color: #38bdf8; font-weight: 700; text-decoration: none; transition: color 0.2s;
+        }
+        .link:hover span { color: #818cf8; text-decoration: underline; }
+
+        @keyframes authEntrance { 
+            0% { opacity: 0; transform: scale(0.92) translateY(30px); } 
+            100% { opacity: 1; transform: scale(1) translateY(0); } 
+        }
+
+        @media (max-width: 480px) { 
+            .auth-box { padding: 36px 24px; border-radius: 24px; } 
+            .auth-box h2 { font-size: 24px; } 
+            .input-group input { font-size: 16px !important; } 
+        }
+    </style>
+</head>
+<body>
+    <div class="ambient-orb orb-1"></div>
+    <div class="ambient-orb orb-2"></div>
+
+    <div class="auth-box">
+        <div class="brand-logo">
+            <img src="/static/WS.jpg" alt="WS Logo" class="brand-avatar">
+        </div>
+        <h2>Welcome Back</h2>
+        <p class="auth-subtitle">Sign in to connect with your space</p>
+        
+        {% with messages = get_flashed_messages() %}
+          {% if messages %}
+            {% for message in messages %}
+              <div class="flash-msg"><i class="fa-solid fa-triangle-exclamation"></i> {{ message }}</div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+
+        <form method="POST" action="/login">
+            <div class="input-group">
+                <input type="text" name="username" placeholder="Username" required autocomplete="off">
+                <i class="fa-solid fa-user input-icon"></i>
+            </div>
+            <div class="input-group">
+                <input type="password" name="password" placeholder="Password" required>
+                <i class="fa-solid fa-lock input-icon"></i>
+            </div>
+            <button type="submit" class="btn-primary">
+                Login <i class="fa-solid fa-arrow-right-to-bracket"></i>
+            </button>
+        </form>
+        <div class="link-container">
+            <a href="/register" class="link">Don't have an account? <span>Register here</span></a>
+        </div>
+    </div>
+</body>
+</html>
